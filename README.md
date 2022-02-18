@@ -1,2 +1,2 @@
-# ThomsonReuters - Test
+# ThomsonReuters
 Add an additional change.
