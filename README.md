@@ -1,2 +1,2 @@
-# ThomsonReuters - Webhook
+# ThomsonReuters
 This is a new change.
