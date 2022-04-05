@@ -1,0 +1,49 @@
+name: Azure DevOps Work Item Changes
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+    - name: PowerShell script
+      # You may pin to the exact commit or the version.
+      # uses: Amadevus/pwsh-script@1f1751bbf3d1a92127bfc6c32403283625880cbf
+      uses: Amadevus/pwsh-script@v2.0.1
+      with:
+        # PowerShell script to execute in Actions-hydrated context
+        script: |
+        $azureDevOpsPAT = "$(System.AccessToken)"
+        $baseUrl = "https://ztdevops.com/Harris-County-Testing/Harris-County"
+        $azureDevOpsAuthenicationHeader = @{Authorization = 'Basic ' + [Convert]::ToBase64String([Text.Encoding]::ASCII.GetBytes(":$($AzureDevOpsPAT)")) }
+
+        $branchName = "$(Build.SourceBranchName)"
+        $workItemNumber= $branchName | Select-String -Pattern '[^-]*$' | ForEach-Object {$_.Matches.Value}
+
+        Write-Host 'This is the work item number: $workItemNumber'
+
+        # An array of hashtables. 
+        $body = @(
+        @{
+          "op" = "replace"
+          "path" = "/fields/System.State"
+          "value" = "Resolved"
+        }
+        )
+
+        # Convert the array to a string containing JSON.
+        $jsonBody =  ConvertTo-Json $body
+
+        # Invoke REST method.
+        Invoke-RestMethod `
+        -Uri "$($baseUrl)/_apis/wit/workitems/$($workItemNumber)?api-version=6.0" `
+        -Method Patch -Headers $AzureDevOpsAuthenicationHeader `
+        -ContentType "application/json-patch+json" `
+        -Body $JsonBody
